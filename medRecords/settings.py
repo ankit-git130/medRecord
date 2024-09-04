@@ -19,7 +19,7 @@ from datetime import timedelta
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Secret key from environment variables
-SECRET_KEY = os.getenv('SECRET_KEY')  # Ensure this is set in Railway environment variables
+SECRET_KEY = os.getenv('SECRET_KEY', 'your-default-secret-key')
 
 # Debug mode setting from environment variables
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
@@ -75,9 +75,16 @@ TEMPLATES = [
 # WSGI application
 WSGI_APPLICATION = 'medRecords.wsgi.application'
 
-# Database configuration using dj_database_url
+# Database configuration using dj_database_url and Railway PostgreSQL
 DATABASES = {
-    'default': dj_database_url.config(conn_max_age=600, ssl_require=True)
+    'default': dj_database_url.parse(
+        os.getenv(
+            'DATABASE_URL',
+            'postgresql://postgres:wwhHYQlsMBQjUuVoVCzbGJlBsKCdWydt@meticulous-empathy-j1yu.railway.internal:5432/railway'
+        ),
+        conn_max_age=600,
+        ssl_require=True
+    )
 }
 
 # Password validation
@@ -104,8 +111,8 @@ USE_TZ = True
 
 # Static files settings
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # Directory to collect static files
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'  # WhiteNoise storage for static files
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default auto field
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -129,7 +136,6 @@ SIMPLE_JWT = {
 # Security settings
 CSRF_TRUSTED_ORIGINS = ['https://*.railway.app']
 
-# Production security settings
 SECURE_SSL_REDIRECT = True
 SECURE_HSTS_SECONDS = 31536000
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
@@ -139,18 +145,3 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 X_FRAME_OPTIONS = 'DENY'
-
-# Logging settings for production
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-        },
-    },
-    'root': {
-        'handlers': ['console'],
-        'level': 'WARNING',
-    },
-}
