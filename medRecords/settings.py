@@ -25,7 +25,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'your-default-secret-key')
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 # Allowed hosts setting from environment variables
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '.railway.app,localhost').split(',')
+ALLOWED_HOSTS = ['.railway.app', 'medrecord-production.up.railway.app']
 
 # Installed apps for the project
 INSTALLED_APPS = [
@@ -136,12 +136,13 @@ SIMPLE_JWT = {
 # Security settings
 CSRF_TRUSTED_ORIGINS = ['https://*.railway.app']
 
-SECURE_SSL_REDIRECT = True
-SECURE_HSTS_SECONDS = 31536000
+SECURE_SSL_REDIRECT = False
+SECURE_HSTS_SECONDS = 0
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
 X_FRAME_OPTIONS = 'DENY'
+CSRF_TRUSTED_ORIGINS = ['https://medrecord-production.up.railway.app']
