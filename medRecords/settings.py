@@ -77,8 +77,11 @@ WSGI_APPLICATION = 'medRecords.wsgi.application'
 
 # Database configuration using dj_database_url and Railway PostgreSQL
 DATABASES = {
-    'default': dj_database_url.config(
-        default='postgresql://postgres:zPrmVBLpkUwOoQAbWzrAWgGnAkhiNjYi@junction.proxy.rlwy.net:37177/railway',
+    'default': dj_database_url.parse(
+        os.getenv(
+            'DATABASE_PUBLIC_URL',
+            'postgresql://postgres:AhNVkxDGtosGeWsquYMKfEFNfzXEXIOs@junction.proxy.rlwy.net:56116/railway'
+        ),
         conn_max_age=600,
         ssl_require=True
     )
