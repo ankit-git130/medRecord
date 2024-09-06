@@ -7,12 +7,13 @@ from .views import (
     PatientRecordListCreateView, PatientRecordDetailView,
     DepartmentDoctorsView, DepartmentPatientsView,
     CustomTokenObtainPairView, CustomTokenRefreshView,
-    login_view, UserDashboardView
+    UserDashboardView
 )
 
 urlpatterns = [
     path('', home, name='home'),
-    path('login/', login_view, name='login'),
+    path('api/token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', CustomTokenRefreshView.as_view(), name='token_refresh'),
     path('user-dashboard/', UserDashboardView.as_view(), name='user-dashboard'),
     path('departments/', DepartmentListCreateView.as_view(), name='department-list-create'),
     path('departments/<int:pk>/', DepartmentDetailView.as_view(), name='department-detail'),
@@ -24,6 +25,4 @@ urlpatterns = [
     path('patients/<int:pk>/', PatientDetailView.as_view(), name='patient-detail'),
     path('patient_records/', PatientRecordListCreateView.as_view(), name='patient-record-list-create'),
     path('patient_records/<int:pk>/', PatientRecordDetailView.as_view(), name='patient-record-detail'),
-    path('api/token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh/', CustomTokenRefreshView.as_view(), name='token_refresh'),
 ]
