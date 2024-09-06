@@ -2,19 +2,10 @@ from rest_framework import generics, permissions
 from .models import Department, Patient, Doctor, PatientRecord
 from .serializers import DepartmentSerializer, PatientSerializer, DoctorSerializer, PatientRecordSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework.permissions import IsAuthenticated
 from django.http import HttpResponse
 
-
-
-
-class CustomTokenObtainPairView(TokenObtainPairView):
-    # Customize token response if needed
-    pass
-
-class CustomTokenRefreshView(TokenRefreshView):
-    # Customize token response if needed
-    pass
-
+# Custom permissions
 class IsDoctorOrSuperuser(permissions.BasePermission):
     def has_permission(self, request, view):
         return request.user.is_superuser or hasattr(request.user, 'doctor')
@@ -24,8 +15,17 @@ class IsPatientOrDoctor(permissions.BasePermission):
         if request.user.is_superuser:
             return True
         if hasattr(request.user, 'patient'):
-            return obj.patient.user == request.user or (hasattr(request.user, 'doctor') and obj.department == request.user.doctor.department)
+            return obj.patient.user == request.user
+        if hasattr(request.user, 'doctor'):
+            return obj.patient.department == request.user.doctor.department
         return False
+
+# Views
+class CustomTokenObtainPairView(TokenObtainPairView):
+    pass
+
+class CustomTokenRefreshView(TokenRefreshView):
+    pass
 
 class DepartmentListCreateView(generics.ListCreateAPIView):
     queryset = Department.objects.all()
@@ -60,16 +60,23 @@ class PatientDetailView(generics.RetrieveUpdateDestroyAPIView):
 class PatientRecordListCreateView(generics.ListCreateAPIView):
     queryset = PatientRecord.objects.all()
     serializer_class = PatientRecordSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        if self.request.user.is_superuser:
+        user = self.request.user
+        if user.is_superuser:
             return PatientRecord.objects.all()
-        if hasattr(self.request.user, 'doctor'):
-            return PatientRecord.objects.filter(department=self.request.user.doctor.department)
+        elif hasattr(user, 'doctor'):
+            return PatientRecord.objects.filter(patient__department=user.doctor.department)
+        elif hasattr(user, 'patient'):
+            return PatientRecord.objects.filter(patient=user.patient)
         return PatientRecord.objects.none()
 
     def perform_create(self, serializer):
-        serializer.save(department=self.request.user.doctor.department)
+        if hasattr(self.request.user, 'doctor'):
+            serializer.save(department=self.request.user.doctor.department)
+        else:
+            serializer.save()
 
 class PatientRecordDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = PatientRecord.objects.all()
@@ -90,6 +97,5 @@ class DepartmentPatientsView(generics.ListAPIView):
         department_id = self.kwargs['pk']
         return Patient.objects.filter(department_id=department_id)
 
-
 def home(request):
-    return HttpResponse("Welcome to the grey scientific labs")
+    return HttpResponse("Welcome to the Grey Scientific Labs")
