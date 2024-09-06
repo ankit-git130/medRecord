@@ -3,8 +3,6 @@ from .models import Department, Patient, Doctor, PatientRecord
 from .serializers import DepartmentSerializer, PatientSerializer, DoctorSerializer, PatientRecordSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework.permissions import IsAuthenticated
-from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.http import HttpResponse
@@ -23,19 +21,6 @@ class IsPatientOrDoctor(permissions.BasePermission):
         if hasattr(request.user, 'doctor'):
             return obj.patient.department == request.user.doctor.department
         return False
-
-# Login View
-def login_view(request):
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
-            login(request, user)
-            return redirect('user-dashboard')  # Redirect to user dashboard after login
-        else:
-            return render(request, 'login.html', {'error': 'Invalid credentials'})
-    return render(request, 'login.html')
 
 # User Dashboard View
 class UserDashboardView(APIView):
@@ -63,13 +48,14 @@ class UserDashboardView(APIView):
             }
         return Response(data)
 
-# Views
+# JWT Views
 class CustomTokenObtainPairView(TokenObtainPairView):
     pass
 
 class CustomTokenRefreshView(TokenRefreshView):
     pass
 
+# Department Views
 class DepartmentListCreateView(generics.ListCreateAPIView):
     queryset = Department.objects.all()
     serializer_class = DepartmentSerializer
@@ -80,6 +66,7 @@ class DepartmentDetailView(generics.RetrieveAPIView):
     serializer_class = DepartmentSerializer
     permission_classes = [permissions.AllowAny]
 
+# Doctor Views
 class DoctorListCreateView(generics.ListCreateAPIView):
     queryset = Doctor.objects.all()
     serializer_class = DoctorSerializer
@@ -90,6 +77,7 @@ class DoctorDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = DoctorSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+# Patient Views
 class PatientListCreateView(generics.ListCreateAPIView):
     queryset = Patient.objects.all()
     serializer_class = PatientSerializer
@@ -100,6 +88,7 @@ class PatientDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = PatientSerializer
     permission_classes = [IsPatientOrDoctor]
 
+# Patient Record Views
 class PatientRecordListCreateView(generics.ListCreateAPIView):
     queryset = PatientRecord.objects.all()
     serializer_class = PatientRecordSerializer
@@ -126,6 +115,7 @@ class PatientRecordDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = PatientRecordSerializer
     permission_classes = [IsPatientOrDoctor]
 
+# Department-specific Views
 class DepartmentDoctorsView(generics.ListAPIView):
     serializer_class = DoctorSerializer
 
@@ -140,5 +130,6 @@ class DepartmentPatientsView(generics.ListAPIView):
         department_id = self.kwargs['pk']
         return Patient.objects.filter(department_id=department_id)
 
+# Home View
 def home(request):
     return HttpResponse("Welcome to the Grey Scientific Labs")
