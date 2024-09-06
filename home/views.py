@@ -3,6 +3,10 @@ from .models import Department, Patient, Doctor, PatientRecord
 from .serializers import DepartmentSerializer, PatientSerializer, DoctorSerializer, PatientRecordSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework.permissions import IsAuthenticated
+from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login
+from rest_framework.response import Response
+from rest_framework.views import APIView
 from django.http import HttpResponse
 
 # Custom permissions
@@ -19,6 +23,45 @@ class IsPatientOrDoctor(permissions.BasePermission):
         if hasattr(request.user, 'doctor'):
             return obj.patient.department == request.user.doctor.department
         return False
+
+# Login View
+def login_view(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return redirect('user-dashboard')  # Redirect to user dashboard after login
+        else:
+            return render(request, 'login.html', {'error': 'Invalid credentials'})
+    return render(request, 'login.html')
+
+# User Dashboard View
+class UserDashboardView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # Determine if the user is a patient or a doctor
+        if hasattr(request.user, 'patient'):
+            patient = Patient.objects.get(user=request.user)
+            data = {
+                'role': 'Patient',
+                'username': patient.user.username,
+                'department': patient.department.name
+            }
+        elif hasattr(request.user, 'doctor'):
+            doctor = Doctor.objects.get(user=request.user)
+            data = {
+                'role': 'Doctor',
+                'username': doctor.user.username,
+                'department': doctor.department.name
+            }
+        else:
+            data = {
+                'message': 'No associated role found'
+            }
+        return Response(data)
 
 # Views
 class CustomTokenObtainPairView(TokenObtainPairView):
